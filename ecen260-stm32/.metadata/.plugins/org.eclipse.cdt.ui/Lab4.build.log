@@ -1,0 +1,16 @@
+11:47:05 **** Build of configuration Debug for project Lab4 ****
+make -j8 all 
+arm-none-eabi-gcc -o "Lab4.elf" @"objects.list"   -mcpu=cortex-m4 -T"C:\Users\young\OneDrive\Documents\- Hardware Labs\STM32-Nucleo\ecen260-stm32\Lab4\STM32L476RGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Lab4.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Finished building target: Lab4.elf
+ 
+arm-none-eabi-size  Lab4.elf 
+arm-none-eabi-objdump -h -S Lab4.elf  > "Lab4.list"
+   text	   data	    bss	    dec	    hex	filename
+    656	      0	   1568	   2224	    8b0	Lab4.elf
+Finished building: default.size.stdout
+ 
+Finished building: Lab4.list
+ 
+
+11:47:06 Build Finished. 0 errors, 0 warnings. (took 863ms)
+
