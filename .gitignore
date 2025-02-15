@@ -20,12 +20,15 @@ Release/
 # Temporary files
 *.swp
 
-# # Ignore STM32CubeIDE settings folder
-# .settings/
+# Ignore STM32CubeIDE settings folder
+.settings/
 
-# # Ignore Startup directory
-# Startup/
+# Ignore Startup directory
+Startup/
 
-# # Ignore STM32 linker scripts
-# STM32L476RGTX_FLASH.ld
-# STM32L476RGTX_RAM.ld
+# Ignore STM32 linker scripts
+STM32L476RGTX_FLASH.ld
+STM32L476RGTX_RAM.ld
+
+#ignore C_demo files
+C_demo/
