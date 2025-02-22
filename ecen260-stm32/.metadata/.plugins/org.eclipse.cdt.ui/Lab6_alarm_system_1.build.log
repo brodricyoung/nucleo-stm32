@@ -1,0 +1,10 @@
+12:59:07 **** Build of configuration Debug for project Lab6_alarm_system_1 ****
+make -j8 all 
+arm-none-eabi-size  Lab6_alarm_system_1.elf 
+   text	   data	    bss	    dec	    hex	filename
+     96	      0	   1568	   1664	    680	Lab6_alarm_system_1.elf
+Finished building: default.size.stdout
+ 
+
+12:59:08 Build Finished. 0 errors, 0 warnings. (took 857ms)
+

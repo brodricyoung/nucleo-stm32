@@ -1,0 +1,8 @@
+../Src/drivers.c:15:6:GPIOA_ClkEnable	1
+../Src/drivers.c:19:6:GPIOB_ClkEnable	1
+../Src/drivers.c:23:6:GPIOC_ClkEnable	1
+../Src/drivers.c:31:6:GPIO_Mode	3
+../Src/drivers.c:49:6:GPIO_Toggle	1
+../Src/drivers.c:56:6:GPIO_WritePin	2
+../Src/drivers.c:71:6:GPIO_Pull	5
+../Src/drivers.c:102:10:GPIO_ReadPin	1
