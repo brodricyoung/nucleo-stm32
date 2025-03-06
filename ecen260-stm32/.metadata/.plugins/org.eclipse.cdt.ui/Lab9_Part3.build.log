@@ -1,0 +1,21 @@
+12:02:28 **** Incremental Build of configuration Debug for project Lab9_Part3 ****
+make -j8 all 
+arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32L476xx -c -I../Core/Inc -I../Drivers/STM32L4xx_HAL_Driver/Inc -I../Drivers/STM32L4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32L4xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/main.o"
+../Core/Src/main.c: In function 'main':
+../Core/Src/main.c:108:20: warning: unused variable 'analog_measurement' [-Wunused-variable]
+  108 |           uint16_t analog_measurement = HAL_ADC_GetValue(&hadc1);
+      |                    ^~~~~~~~~~~~~~~~~~
+arm-none-eabi-gcc -o "Lab9_Part3.elf" @"objects.list"   -mcpu=cortex-m4 -T"C:\Users\young\OneDrive\Documents\- Hardware Labs\nucleo-stm32\ecen260-stm32\Lab9_Part3\STM32L476RGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Lab9_Part3.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Finished building target: Lab9_Part3.elf
+ 
+arm-none-eabi-size  Lab9_Part3.elf 
+arm-none-eabi-objdump -h -S Lab9_Part3.elf  > "Lab9_Part3.list"
+   text	   data	    bss	    dec	    hex	filename
+  14236	     12	   1668	  15916	   3e2c	Lab9_Part3.elf
+Finished building: default.size.stdout
+ 
+Finished building: Lab9_Part3.list
+ 
+
+12:02:29 Build Finished. 0 errors, 1 warnings. (took 1s.494ms)
+
