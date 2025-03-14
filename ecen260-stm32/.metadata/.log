@@ -6674,3 +6674,51 @@ java.lang.Exception: Resource '/Lab9_Part3' does not exist.
 
 !ENTRY org.eclipse.cdt.core 1 0 2025-03-05 13:36:40.395
 !MESSAGE Indexed 'Lab9_Part3_ADC' (23 sources, 116 headers) in 3.98 sec: 10,943 declarations; 51,494 references; 3 unresolved inclusions; 46 syntax errors; 171 unresolved names (0.27%)
+!SESSION 2025-03-10 11:51:57.138 -----------------------------------------------
+eclipse.buildId=Version 1.17.0
+java.version=21.0.3
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=en_US
+Command-line arguments:  -os win32 -ws win32 -arch x86_64
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 4 4 2025-03-10 11:52:25.621
+!MESSAGE CubeMX plugin appears to be active, Log4j initialization might be too late.
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2025-03-10 11:52:25.624
+!MESSAGE Log4j2 initialized with config file C:\Users\young\OneDrive\Documents\- Hardware Labs\nucleo-stm32\ecen260-stm32\.metadata\.log4j2.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2025-03-10 11:52:42.251
+!MESSAGE Started RMI Server, listening on port 41337
+
+!ENTRY org.eclipse.cdt.core 1 0 2025-03-10 11:58:42.414
+!MESSAGE Indexed 'transmitter_demo' (23 sources, 82 headers) in 8.43 sec: 5,459 declarations; 29,401 references; 0 unresolved inclusions; 1 syntax errors; 2 unresolved names (0.0057%)
+!SESSION 2025-03-11 23:54:40.393 -----------------------------------------------
+eclipse.buildId=Version 1.17.0
+java.version=21.0.3
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=en_US
+Command-line arguments:  -os win32 -ws win32 -arch x86_64
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 4 4 2025-03-11 23:55:13.246
+!MESSAGE CubeMX plugin appears to be active, Log4j initialization might be too late.
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2025-03-11 23:55:13.246
+!MESSAGE Log4j2 initialized with config file C:\Users\young\OneDrive\Documents\- Hardware Labs\nucleo-stm32\ecen260-stm32\.metadata\.log4j2.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2025-03-11 23:55:38.129
+!MESSAGE Started RMI Server, listening on port 41337
+
+!ENTRY org.eclipse.cdt.core 1 0 2025-03-11 23:58:03.312
+!MESSAGE Indexed 'Lab10-asynchronous_serial communication' (23 sources, 82 headers) in 8.36 sec: 5,459 declarations; 29,401 references; 0 unresolved inclusions; 1 syntax errors; 2 unresolved names (0.0057%)
+
+!ENTRY com.st.stm32cube.ide.mcu.debug 4 0 2025-03-12 13:44:04.306
+!MESSAGE Error - No active DSF-Session. tmpSessionId = 14 (contextManager row 121)
+
+!ENTRY com.st.stm32cube.ide.mcu.debug 4 0 2025-03-12 13:44:04.308
+!MESSAGE Existing sessions are:
+
+!ENTRY com.st.stm32cube.ide.mcu.debug 4 0 2025-03-12 13:44:04.311
+!MESSAGE Error - No active DSF-Session. tmpSessionId = 14 (contextManager row 121)
+
+!ENTRY com.st.stm32cube.ide.mcu.debug 4 0 2025-03-12 13:44:04.312
+!MESSAGE Existing sessions are:
