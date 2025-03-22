@@ -575,8 +575,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		 // Turn on LED2 to show key press detected
 		 HAL_GPIO_WritePin(KEY_LED_GPIO_Port, KEY_LED_Pin, 1); // turn on the KEY_LED (LED2)
 
-		 uint8_t key = keypad_decode();  // determine which key was pressed
-		 lcd_send_data(key); // Send data to the LCD
+		 uint8_t key = keypad_decode();  // determine which key was pressed (key is in ascii)
+		 lcd_send_data(key); // Send ascii key data to the LCD
 
 		 // wait for user to release key, then turn off LED2
 		while (HAL_GPIO_ReadPin(DATA_AVAILABLE_GPIO_Port, DATA_AVAILABLE_Pin) == GPIO_PIN_SET);
