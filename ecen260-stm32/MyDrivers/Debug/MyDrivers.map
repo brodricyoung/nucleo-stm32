@@ -878,10 +878,10 @@ LOAD C:/ST/STM32CubeIDE_1.17.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.ext
  .debug_macro   0x00000f7f       0x52 ./Src/drivers.o
  .debug_macro   0x00000fd1       0xde ./Src/main.o
 
-.debug_line     0x00000000      0xa3e
+.debug_line     0x00000000      0xa42
  .debug_line    0x00000000      0x560 ./Src/drivers.o
- .debug_line    0x00000560      0x463 ./Src/main.o
- .debug_line    0x000009c3       0x7b ./Startup/startup_stm32l476rgtx.o
+ .debug_line    0x00000560      0x467 ./Src/main.o
+ .debug_line    0x000009c7       0x7b ./Startup/startup_stm32l476rgtx.o
 
 .debug_str      0x00000000     0x3f90
  .debug_str     0x00000000     0x3dc0 ./Src/drivers.o

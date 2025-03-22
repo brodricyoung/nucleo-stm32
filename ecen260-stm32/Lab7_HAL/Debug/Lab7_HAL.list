@@ -172,8 +172,8 @@ int main(void)
  8000242:	f000 fcb3 	bl	8000bac <HAL_GPIO_WritePin>
 	  }
 
-	  // if system is armed, check sensors
-	  if (armed){
+		// if system is armed, check sensors
+		if (armed){
  8000246:	687b      	ldr	r3, [r7, #4]
  8000248:	2b00      	cmp	r3, #0
  800024a:	d0c8      	beq.n	80001de <main+0x16>
@@ -185,7 +185,6 @@ int main(void)
  8000256:	4603      	mov	r3, r0
  8000258:	2b00      	cmp	r3, #0
  800025a:	d005      	beq.n	8000268 <main+0xa0>
-
 			  // system armed & front door is open:
 			  HAL_GPIO_WritePin(FRONTALARM_GPIO_Port, FRONTALARM_Pin, 1); // turn on FrontAlarm LED
  800025c:	2201      	movs	r2, #1
@@ -202,7 +201,6 @@ int main(void)
  8000272:	4603      	mov	r3, r0
  8000274:	2b00      	cmp	r3, #0
  8000276:	d006      	beq.n	8000286 <main+0xbe>
-
 			  // system armed & back door is open:
 			  HAL_GPIO_WritePin(BACKALARM_GPIO_Port, BACKALARM_Pin, 1); // turn off BackAlarm LED
  8000278:	2201      	movs	r2, #1
@@ -219,7 +217,6 @@ int main(void)
  8000290:	4603      	mov	r3, r0
  8000292:	2b00      	cmp	r3, #0
  8000294:	d0a3      	beq.n	80001de <main+0x16>
-
 			  // system armed & window is open:
 			  HAL_GPIO_WritePin(WINDOWALARM_GPIO_Port, WINDOWALARM_Pin, 1); // turn on WindowAlarm LED
  8000296:	2201      	movs	r2, #1
@@ -1631,11 +1628,11 @@ void HAL_GPIO_Init(GPIO_TypeDef  *GPIOx, GPIO_InitTypeDef *GPIO_Init)
       }
 
       /* Configure IO Direction mode (Input, Output, Alternate or Analog) */
-      temp = GPIOx->MODER;
+		temp = GPIOx->MODER;
  8000998:	687b      	ldr	r3, [r7, #4]
  800099a:	681b      	ldr	r3, [r3, #0]
  800099c:	613b      	str	r3, [r7, #16]
-      temp &= ~(GPIO_MODER_MODE0 << (position * 2u));
+		temp &= ~(GPIO_MODER_MODE0 << (position * 2u));
  800099e:	697b      	ldr	r3, [r7, #20]
  80009a0:	005b      	lsls	r3, r3, #1
  80009a2:	2203      	movs	r2, #3
@@ -1644,7 +1641,7 @@ void HAL_GPIO_Init(GPIO_TypeDef  *GPIOx, GPIO_InitTypeDef *GPIO_Init)
  80009aa:	693a      	ldr	r2, [r7, #16]
  80009ac:	4013      	ands	r3, r2
  80009ae:	613b      	str	r3, [r7, #16]
-      temp |= ((GPIO_Init->Mode & GPIO_MODE) << (position * 2u));
+		temp |= ((GPIO_Init->Mode & GPIO_MODE) << (position * 2u));
  80009b0:	683b      	ldr	r3, [r7, #0]
  80009b2:	685b      	ldr	r3, [r3, #4]
  80009b4:	f003 0203 	and.w	r2, r3, #3
@@ -1654,7 +1651,7 @@ void HAL_GPIO_Init(GPIO_TypeDef  *GPIOx, GPIO_InitTypeDef *GPIO_Init)
  80009c0:	693a      	ldr	r2, [r7, #16]
  80009c2:	4313      	orrs	r3, r2
  80009c4:	613b      	str	r3, [r7, #16]
-      GPIOx->MODER = temp;
+		GPIOx->MODER = temp;
  80009c6:	687b      	ldr	r3, [r7, #4]
  80009c8:	693a      	ldr	r2, [r7, #16]
  80009ca:	601a      	str	r2, [r3, #0]

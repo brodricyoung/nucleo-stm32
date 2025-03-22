@@ -34,34 +34,34 @@ $(wildcard ../makefile.init) \
 $(wildcard ../makefile.targets) \
 
 
-BUILD_ARTIFACT_NAME := Lab9_Part2
+BUILD_ARTIFACT_NAME := Lab9_Part2_PWM
 BUILD_ARTIFACT_EXTENSION := elf
 BUILD_ARTIFACT_PREFIX :=
 BUILD_ARTIFACT := $(BUILD_ARTIFACT_PREFIX)$(BUILD_ARTIFACT_NAME)$(if $(BUILD_ARTIFACT_EXTENSION),.$(BUILD_ARTIFACT_EXTENSION),)
 
 # Add inputs and outputs from these tool invocations to the build variables 
 EXECUTABLES += \
-Lab9_Part2.elf \
+Lab9_Part2_PWM.elf \
 
 MAP_FILES += \
-Lab9_Part2.map \
+Lab9_Part2_PWM.map \
 
 SIZE_OUTPUT += \
 default.size.stdout \
 
 OBJDUMP_LIST += \
-Lab9_Part2.list \
+Lab9_Part2_PWM.list \
 
 
 # All Target
 all: main-build
 
 # Main-build Target
-main-build: Lab9_Part2.elf secondary-outputs
+main-build: Lab9_Part2_PWM.elf secondary-outputs
 
 # Tool invocations
-Lab9_Part2.elf Lab9_Part2.map: $(OBJS) $(USER_OBJS) C:\Users\young\OneDrive\Documents\-\ Hardware\ Labs\nucleo-stm32\ecen260-stm32\Lab9_Part2\STM32L476RGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "Lab9_Part2.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\young\OneDrive\Documents\- Hardware Labs\nucleo-stm32\ecen260-stm32\Lab9_Part2\STM32L476RGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Lab9_Part2.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Lab9_Part2_PWM.elf Lab9_Part2_PWM.map: $(OBJS) $(USER_OBJS) C:\Users\young\OneDrive\Documents\-\ Hardware\ Labs\nucleo-stm32\ecen260-stm32\Lab9_Part2_PWM\STM32L476RGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "Lab9_Part2_PWM.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\young\OneDrive\Documents\- Hardware Labs\nucleo-stm32\ecen260-stm32\Lab9_Part2_PWM\STM32L476RGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Lab9_Part2_PWM.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -70,14 +70,14 @@ default.size.stdout: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
 	@echo 'Finished building: $@'
 	@echo ' '
 
-Lab9_Part2.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "Lab9_Part2.list"
+Lab9_Part2_PWM.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "Lab9_Part2_PWM.list"
 	@echo 'Finished building: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) Lab9_Part2.elf Lab9_Part2.list Lab9_Part2.map default.size.stdout
+	-$(RM) Lab9_Part2_PWM.elf Lab9_Part2_PWM.list Lab9_Part2_PWM.map default.size.stdout
 	-@echo ' '
 
 secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)

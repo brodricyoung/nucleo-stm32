@@ -1,0 +1,12 @@
+../Core/Src/main.c:115:5:main	1
+../Core/Src/main.c:176:6:SystemClock_Config	4
+../Core/Src/main.c:226:13:MX_SPI1_Init	2
+../Core/Src/main.c:266:13:MX_GPIO_Init	1
+../Core/Src/main.c:311:6:SPI_write	1
+../Core/Src/main.c:320:6:GLCD_data_write	1
+../Core/Src/main.c:327:6:GLCD_command_write	1
+../Core/Src/main.c:334:6:GLCD_init	1
+../Core/Src/main.c:351:6:GLCD_setCursor	1
+../Core/Src/main.c:356:6:GLCD_clear	2
+../Core/Src/main.c:364:6:GLCD_putchar	2
+../Core/Src/main.c:378:6:Error_Handler	1

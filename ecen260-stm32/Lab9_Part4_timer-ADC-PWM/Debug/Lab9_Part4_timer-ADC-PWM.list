@@ -1238,7 +1238,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
  8000840:	4603      	mov	r3, r0
  8000842:	837b      	strh	r3, [r7, #26]
 
-		 // Convert ADC levels to a fraction of total
+		 // Convert ADC levels to a fraction of total (value of 0.0 to 1.0)
 		 float knob_value = ((float) knob_measurement) / ADC_RANGE;
  8000844:	8bfb      	ldrh	r3, [r7, #30]
  8000846:	ee07 3a90 	vmov	s15, r3

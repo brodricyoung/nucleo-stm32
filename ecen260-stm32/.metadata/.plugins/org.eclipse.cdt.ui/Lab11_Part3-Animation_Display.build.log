@@ -1,0 +1,10 @@
+15:40:27 **** Incremental Build of configuration Debug for project Lab11_Part3-Animation_Display ****
+make -j8 all 
+arm-none-eabi-size  Lab11_Part3-Animation_Display.elf 
+   text	   data	    bss	    dec	    hex	filename
+   9244	     12	   1668	  10924	   2aac	Lab11_Part3-Animation_Display.elf
+Finished building: default.size.stdout
+ 
+
+15:40:28 Build Finished. 0 errors, 0 warnings. (took 386ms)
+

@@ -1,0 +1,12 @@
+../Core/Src/main.c:115:5:main	8	static
+../Core/Src/main.c:176:6:SystemClock_Config	96	static
+../Core/Src/main.c:226:13:MX_SPI1_Init	8	static
+../Core/Src/main.c:266:13:MX_GPIO_Init	48	static
+../Core/Src/main.c:311:6:SPI_write	16	static
+../Core/Src/main.c:320:6:GLCD_data_write	16	static
+../Core/Src/main.c:327:6:GLCD_command_write	16	static
+../Core/Src/main.c:334:6:GLCD_init	8	static
+../Core/Src/main.c:351:6:GLCD_setCursor	16	static
+../Core/Src/main.c:356:6:GLCD_clear	16	static
+../Core/Src/main.c:364:6:GLCD_putchar	24	static
+../Core/Src/main.c:378:6:Error_Handler	4	static,ignoring_inline_asm

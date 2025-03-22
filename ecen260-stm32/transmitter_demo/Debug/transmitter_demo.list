@@ -376,11 +376,11 @@ int main(void)
  80004c4:	f000 f894 	bl	80005f0 <MX_GPIO_Init>
   MX_USART2_UART_Init();
  80004c8:	f000 f862 	bl	8000590 <MX_USART2_UART_Init>
-
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  // read what value button 1 is and send that to the transmitter pin PA9
 	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13));
  80004cc:	f44f 5100 	mov.w	r1, #8192	@ 0x2000
  80004d0:	4805      	ldr	r0, [pc, #20]	@ (80004e8 <main+0x30>)
