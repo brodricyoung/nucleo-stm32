@@ -1,39 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <section name="Workbench">
 	<section name="org.eclipse.ui.texteditor.FindReplaceDialog">
-		<item key="selection" value=""/>
+		<item key="selection" value="REVERSE_Pin"/>
 		<item key="wrap" value="false"/>
 		<item key="casesensitive" value="false"/>
 		<item key="wholeword" value="false"/>
 		<item key="incremental" value="false"/>
 		<item key="isRegEx" value="false"/>
 		<list key="findhistory">
-			<item value="HAL_TIM_PeriodElapsedCallback"/>
-			<item value="knob_measurement"/>
-			<item value="knob_meas"/>
-			<item value="TogglePin"/>
-			<item value="ReadPin"/>
-			<item value="uint_"/>
-			<item value="HAL_GPIO_Mode"/>
-			<item value="HAL_GPIO_MODE"/>
-			<item value="HAL_GPIO_WritePin"/>
-			<item value="GPIO_Mode"/>
-			<item value="pull"/>
-			<item value="WritePin"/>
-			<item value="PIN"/>
-			<item value="PORT"/>
-			<item value="unint32_t"/>
+			<item value="REVERSE"/>
+			<item value="freq_k"/>
+			<item value="Vpp_new"/>
+			<item value="Vpk_to_pk"/>
+			<item value="Vpeak_to_peak"/>
+			<item value="peaktopeak"/>
+			<item value="pkpk"/>
+			<item value="ampl"/>
+			<item value="HAL_DAC"/>
+			<item value="DMA"/>
+			<item value="&amp;htim"/>
+			<item value="sine_wave"/>
+			<item value="FGEN_OUT"/>
+			<item value="printf"/>
+			<item value="DAC"/>
 		</list>
 		<list key="replacehistory">
+			<item value="REVERSE_Pin"/>
+			<item value="freq"/>
 			<item value=""/>
+			<item value="new_Vpp"/>
+			<item value="Vpk_to_pk"/>
+			<item value="Vpp"/>
 			<item value="Pin"/>
 			<item value="Port"/>
 			<item value="uint32_t"/>
 		</list>
 	</section>
 	<section name="org.eclipse.ui.texteditor.FindReplaceDialog_dialogBounds">
-		<item key="DIALOG_X_ORIGIN" value="364"/>
-		<item key="DIALOG_Y_ORIGIN" value="169"/>
+		<item key="DIALOG_X_ORIGIN" value="984"/>
+		<item key="DIALOG_Y_ORIGIN" value="233"/>
 		<item key="DIALOG_WIDTH" value="322"/>
 		<item key="DIALOG_HEIGHT" value="391"/>
 		<item key="DIALOG_FONT_NAME" value="1|Segoe UI|9.0|0|WINDOWS|1|-12|0|0|0|400|0|0|0|1|0|0|0|0|Segoe UI"/>

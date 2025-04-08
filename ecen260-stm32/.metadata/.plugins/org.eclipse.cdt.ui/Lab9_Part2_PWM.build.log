@@ -1,16 +1,10 @@
-14:03:38 **** Build of configuration Debug for project Lab9_Part2_PWM ****
+12:37:48 **** Build of configuration Debug for project Lab9_Part2_PWM ****
 make -j8 all 
-arm-none-eabi-gcc -o "Lab9_Part2_PWM.elf" @"objects.list"   -mcpu=cortex-m4 -T"C:\Users\young\OneDrive\Documents\- Hardware Labs\nucleo-stm32\ecen260-stm32\Lab9_Part2_PWM\STM32L476RGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Lab9_Part2_PWM.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
-Finished building target: Lab9_Part2_PWM.elf
- 
 arm-none-eabi-size  Lab9_Part2_PWM.elf 
-arm-none-eabi-objdump -h -S Lab9_Part2_PWM.elf  > "Lab9_Part2_PWM.list"
    text	   data	    bss	    dec	    hex	filename
   11996	     12	   1644	  13652	   3554	Lab9_Part2_PWM.elf
 Finished building: default.size.stdout
  
-Finished building: Lab9_Part2_PWM.list
- 
 
-14:03:39 Build Finished. 0 errors, 0 warnings. (took 1s.404ms)
+12:37:48 Build Finished. 0 errors, 0 warnings. (took 439ms)
 

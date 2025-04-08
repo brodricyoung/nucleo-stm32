@@ -1,4 +1,11 @@
 eclipse.preferences.version=1
+editor_folding_default_comments=true
+editor_folding_default_doc_comments=true
+editor_folding_default_functions=true
+editor_folding_default_macros=true
+editor_folding_default_methods=true
+editor_folding_default_non_doc_comments=true
+editor_folding_default_structures=true
 spelling_locale_initialized=true
 useAnnotationsPrefPage=true
 useQuickDiffPrefPage=true

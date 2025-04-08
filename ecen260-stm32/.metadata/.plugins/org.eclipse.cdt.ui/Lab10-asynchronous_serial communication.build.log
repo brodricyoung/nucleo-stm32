@@ -1,4 +1,4 @@
-14:03:19 **** Build of configuration Debug for project Lab10-asynchronous_serial communication ****
+12:37:41 **** Build of configuration Debug for project Lab10-asynchronous_serial communication ****
 make -j8 all 
 arm-none-eabi-size  Lab10-asynchronous_serial\ communication.elf 
    text	   data	    bss	    dec	    hex	filename
@@ -6,5 +6,5 @@ arm-none-eabi-size  Lab10-asynchronous_serial\ communication.elf
 Finished building: default.size.stdout
  
 
-14:03:20 Build Finished. 0 errors, 0 warnings. (took 879ms)
+12:37:42 Build Finished. 0 errors, 0 warnings. (took 530ms)
 

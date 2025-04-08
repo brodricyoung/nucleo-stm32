@@ -1,16 +1,10 @@
-14:03:39 **** Build of configuration Debug for project Lab9_Part3_ADC ****
+12:37:49 **** Build of configuration Debug for project Lab9_Part3_ADC ****
 make -j8 all 
-arm-none-eabi-gcc -o "Lab9_Part3_ADC.elf" @"objects.list"   -mcpu=cortex-m4 -T"C:\Users\young\OneDrive\Documents\- Hardware Labs\nucleo-stm32\ecen260-stm32\Lab9_Part3_ADC\STM32L476RGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Lab9_Part3_ADC.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
-Finished building target: Lab9_Part3_ADC.elf
- 
 arm-none-eabi-size  Lab9_Part3_ADC.elf 
-arm-none-eabi-objdump -h -S Lab9_Part3_ADC.elf  > "Lab9_Part3_ADC.list"
    text	   data	    bss	    dec	    hex	filename
   14236	     12	   1668	  15916	   3e2c	Lab9_Part3_ADC.elf
 Finished building: default.size.stdout
  
-Finished building: Lab9_Part3_ADC.list
- 
 
-14:03:41 Build Finished. 0 errors, 0 warnings. (took 1s.346ms)
+12:37:49 Build Finished. 0 errors, 0 warnings. (took 430ms)
 

@@ -49,6 +49,8 @@ extern "C" {
 
 /* USER CODE END EM */
 
+void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
+
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
 
@@ -57,30 +59,31 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define B1_Pin GPIO_PIN_13
-#define B1_GPIO_Port GPIOC
-#define DA_Pin GPIO_PIN_0
-#define DA_GPIO_Port GPIOC
-#define D0_Pin GPIO_PIN_0
-#define D0_GPIO_Port GPIOA
-#define D1_Pin GPIO_PIN_1
-#define D1_GPIO_Port GPIOA
-#define USART_TX_Pin GPIO_PIN_2
-#define USART_TX_GPIO_Port GPIOA
-#define USART_RX_Pin GPIO_PIN_3
-#define USART_RX_GPIO_Port GPIOA
-#define D2_Pin GPIO_PIN_4
-#define D2_GPIO_Port GPIOA
-#define LD2_Pin GPIO_PIN_5
-#define LD2_GPIO_Port GPIOA
-#define D3_Pin GPIO_PIN_0
-#define D3_GPIO_Port GPIOB
+#define CHANNEL1_Pin GPIO_PIN_0
+#define CHANNEL1_GPIO_Port GPIOA
+#define CHANNEL2_Pin GPIO_PIN_1
+#define CHANNEL2_GPIO_Port GPIOA
+#define FGEN_OUT_Pin GPIO_PIN_4
+#define FGEN_OUT_GPIO_Port GPIOA
+#define REVERSE_Pin GPIO_PIN_8
+#define REVERSE_GPIO_Port GPIOA
+#define REVERSE_EXTI_IRQn EXTI9_5_IRQn
+#define FREQ_BIG_Pin GPIO_PIN_10
+#define FREQ_BIG_GPIO_Port GPIOA
+#define FREQ_BIG_EXTI_IRQn EXTI15_10_IRQn
 #define TMS_Pin GPIO_PIN_13
 #define TMS_GPIO_Port GPIOA
 #define TCK_Pin GPIO_PIN_14
 #define TCK_GPIO_Port GPIOA
-#define SWO_Pin GPIO_PIN_3
-#define SWO_GPIO_Port GPIOB
+#define FREQ_SMALL_Pin GPIO_PIN_3
+#define FREQ_SMALL_GPIO_Port GPIOB
+#define FREQ_SMALL_EXTI_IRQn EXTI3_IRQn
+#define VPP_SMALL_Pin GPIO_PIN_4
+#define VPP_SMALL_GPIO_Port GPIOB
+#define VPP_SMALL_EXTI_IRQn EXTI4_IRQn
+#define VPP_BIG_Pin GPIO_PIN_5
+#define VPP_BIG_GPIO_Port GPIOB
+#define VPP_BIG_EXTI_IRQn EXTI9_5_IRQn
 
 /* USER CODE BEGIN Private defines */
 

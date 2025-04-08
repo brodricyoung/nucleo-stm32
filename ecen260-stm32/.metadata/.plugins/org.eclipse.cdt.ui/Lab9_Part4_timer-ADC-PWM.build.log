@@ -1,17 +1,10 @@
-14:03:41 **** Build of configuration Debug for project Lab9_Part4_timer-ADC-PWM ****
+12:37:49 **** Build of configuration Debug for project Lab9_Part4_timer-ADC-PWM ****
 make -j8 all 
-arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32L476xx -c -I../Core/Inc -I../Drivers/STM32L4xx_HAL_Driver/Inc -I../Drivers/STM32L4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32L4xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/main.o"
-arm-none-eabi-gcc -o "Lab9_Part4_timer-ADC-PWM.elf" @"objects.list"   -mcpu=cortex-m4 -T"C:\Users\young\OneDrive\Documents\- Hardware Labs\nucleo-stm32\ecen260-stm32\Lab9_Part4_timer-ADC-PWM\STM32L476RGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Lab9_Part4_timer-ADC-PWM.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
-Finished building target: Lab9_Part4_timer-ADC-PWM.elf
- 
 arm-none-eabi-size  Lab9_Part4_timer-ADC-PWM.elf 
-arm-none-eabi-objdump -h -S Lab9_Part4_timer-ADC-PWM.elf  > "Lab9_Part4_timer-ADC-PWM.list"
    text	   data	    bss	    dec	    hex	filename
   21208	     12	   2028	  23248	   5ad0	Lab9_Part4_timer-ADC-PWM.elf
 Finished building: default.size.stdout
  
-Finished building: Lab9_Part4_timer-ADC-PWM.list
- 
 
-14:03:44 Build Finished. 0 errors, 0 warnings. (took 3s.282ms)
+12:37:50 Build Finished. 0 errors, 0 warnings. (took 418ms)
 

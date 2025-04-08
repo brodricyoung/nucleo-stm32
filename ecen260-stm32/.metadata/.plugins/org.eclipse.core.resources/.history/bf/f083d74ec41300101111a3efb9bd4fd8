@@ -1,0 +1,1261 @@
+/* USER CODE BEGIN Header */
+/**
+  ******************************************************************************
+  * @file           : main.c
+  * @brief          : Main program body
+  ******************************************************************************
+  * @attention
+  *
+  * Copyright (c) 2025 STMicroelectronics.
+  * All rights reserved.
+  *
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
+  *
+  ******************************************************************************
+  */
+/* USER CODE END Header */
+/* Includes ------------------------------------------------------------------*/
+#include "main.h"
+
+/* Private includes ----------------------------------------------------------*/
+/* USER CODE BEGIN Includes */
+#include <stdio.h>
+#include <stdbool.h>
+#include "math.h"
+/* USER CODE END Includes */
+
+/* Private typedef -----------------------------------------------------------*/
+/* USER CODE BEGIN PTD */
+
+/* USER CODE END PTD */
+
+/* Private define ------------------------------------------------------------*/
+/* USER CODE BEGIN PD */
+
+/* USER CODE END PD */
+
+/* Private macro -------------------------------------------------------------*/
+/* USER CODE BEGIN PM */
+// GLCD
+#define CE_PORT GPIOB // PB14 chip enable (aka slave select)
+#define CE_PIN GPIO_PIN_14
+#define DC_PORT GPIOB // PB1 data/control
+#define DC_PIN GPIO_PIN_1
+#define RESET_PORT GPIOB // PB2 reset
+#define RESET_PIN GPIO_PIN_2
+#define GLCD_WIDTH 84
+#define GLCD_HEIGHT 48
+#define NUM_BANKS 6
+
+// LCD
+#define I2C_ADDR 0x27 // I2C address of the PCF8574
+#define RS_BIT 0 // Register select bit
+#define EN_BIT 2 // Enable bit
+#define BL_BIT 3 // Backlight bit
+#define D4_BIT 4 // Data 4 bit
+#define D5_BIT 5 // Data 5 bit
+#define D6_BIT 6 // Data 6 bit
+#define D7_BIT 7 // Data 7 bit
+#define LCD_ROWS 2 // Number of rows on the LCD
+#define LCD_COLS 16 // Number of columns on the LCD
+
+// DAC
+#define SAMPLES 128
+
+/* USER CODE END PM */
+
+/* Private variables ---------------------------------------------------------*/
+ADC_HandleTypeDef hadc1;
+ADC_HandleTypeDef hadc2;
+
+DAC_HandleTypeDef hdac1;
+DMA_HandleTypeDef hdma_dac_ch1;
+
+I2C_HandleTypeDef hi2c1;
+
+SPI_HandleTypeDef hspi2;
+
+TIM_HandleTypeDef htim2;
+
+UART_HandleTypeDef huart2;
+DMA_HandleTypeDef hdma_usart2_tx;
+
+/* USER CODE BEGIN PV */
+uint8_t backlight_state = 1; // LCD backlight
+
+uint32_t new_sine_wave[SAMPLES];
+uint32_t sine33[SAMPLES] = {
+	2048, 2148, 2248, 2348, 2447, 2545, 2642, 2737, 2831, 2923,
+	3013, 3100, 3185, 3267, 3346, 3423, 3495, 3565, 3630, 3692,
+	3750, 3804, 3853, 3898, 3939, 3975, 4007, 4034, 4056, 4073,
+	4085, 4093, 4095, 4093, 4085, 4073, 4056, 4034, 4007, 3975,
+	3939, 3898, 3853, 3804, 3750, 3692, 3630, 3565, 3495, 3423,
+	3346, 3267, 3185, 3100, 3013, 2923, 2831, 2737, 2642, 2545,
+	2447, 2348, 2248, 2148, 2048, 1947, 1847, 1747, 1648, 1550,
+	1453, 1358, 1264, 1172, 1082, 995, 910, 828, 749, 672,
+	600, 530, 465, 403, 345, 291, 242, 197, 156, 120,
+	88, 61, 39, 22, 10, 2, 0, 2, 10, 22,
+	39, 61, 88, 120, 156, 197, 242, 291, 345, 403,
+	465, 530, 600, 672, 749, 828, 910, 995, 1082, 1172,
+	1264, 1358, 1453, 1550, 1648, 1747, 1847, 1947};
+
+uint32_t Vpp = 33;	  // Pk-Pk voltage. divide by 10 for actual value. scale makes it easier to work with
+uint32_t freq = 1000;	  // frequency in Hertz
+char Vpp_str[10];
+char freq_str[10];
+
+// button debounce timing
+uint32_t last_Vpp_small_press = 0;
+uint32_t last_Vpp_big_press = 0;
+uint32_t last_freq_small_press = 0;
+uint32_t last_freq_big_press = 0;
+const uint32_t debounce_delay = 200; // milliseconds
+
+// TODO
+// change font table to display sin wave?
+const char font_table[][6] = {
+	{0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, // space
+	{0x7E, 0x11, 0x11, 0x11, 0x7E, 0x00}, // 'A'
+	{0x7F, 0x49, 0x49, 0x49, 0x36, 0x00}, // 'B'
+	{0x3E, 0x41, 0x41, 0x41, 0x22, 0x00}, // 'C'
+};
+
+/* USER CODE END PV */
+
+/* Private function prototypes -----------------------------------------------*/
+void SystemClock_Config(void);
+void PeriphCommonClock_Config(void);
+static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
+static void MX_ADC1_Init(void);
+static void MX_ADC2_Init(void);
+static void MX_SPI2_Init(void);
+static void MX_I2C1_Init(void);
+static void MX_DAC1_Init(void);
+static void MX_TIM2_Init(void);
+static void MX_USART2_UART_Init(void);
+/* USER CODE BEGIN PFP */
+// GLCD
+void SPI_write(unsigned char data);
+void GLCD_data_write(unsigned char data);
+void GLCD_command_write(unsigned char data);
+void GLCD_init(void);
+void GLCD_setCursor(unsigned char x, unsigned char y);
+void GLCD_clear(void);
+void GLCD_putchar(int font_table_row);
+
+void adc_input_channels(void);
+char* uint16_to_str(uint16_t num, char *str);
+uint8_t keypad_decode(void);
+void generate_sine_wave(uint32_t new_Vpp);
+void set_trigger_frequency(uint32_t wave_frequency);
+void update_sine_wave(uint32_t new_Vpp, uint32_t new_freq);
+void draw_wave(uint32_t new_Vpp);
+/* USER CODE END PFP */
+
+/* Private user code ---------------------------------------------------------*/
+/* USER CODE BEGIN 0 */
+void lcd_write_nibble(uint8_t nibble, uint8_t rs) {
+	 uint8_t data = nibble << D4_BIT;
+	 data |= rs << RS_BIT;
+	 data |= backlight_state << BL_BIT; // Include backlight state in data
+	 data |= 1 << EN_BIT;
+	 HAL_I2C_Master_Transmit(&hi2c1, I2C_ADDR << 1, &data, 1, 100);
+	 HAL_Delay(1);
+	 data &= ~(1 << EN_BIT);
+	 HAL_I2C_Master_Transmit(&hi2c1, I2C_ADDR << 1, &data, 1, 100);
+}
+void lcd_send_cmd(uint8_t cmd) {
+	 uint8_t upper_nibble = cmd >> 4;
+	 uint8_t lower_nibble = cmd & 0x0F;
+	 lcd_write_nibble(upper_nibble, 0);
+	 lcd_write_nibble(lower_nibble, 0);
+	 if (cmd == 0x01 || cmd == 0x02) {
+		 HAL_Delay(2);
+	 }
+}
+void lcd_send_data(uint8_t data) {
+	 uint8_t upper_nibble = data >> 4;
+	 uint8_t lower_nibble = data & 0x0F;
+	 lcd_write_nibble(upper_nibble, 1);
+	 lcd_write_nibble(lower_nibble, 1);
+}
+void lcd_init() {
+	 HAL_Delay(50);
+	 lcd_write_nibble(0x03, 0);
+	 HAL_Delay(5);
+	 lcd_write_nibble(0x03, 0);
+	 HAL_Delay(1);
+	 lcd_write_nibble(0x03, 0);
+	 HAL_Delay(1);
+	 lcd_write_nibble(0x02, 0);
+	 lcd_send_cmd(0x28);
+	 lcd_send_cmd(0x0C);
+	 lcd_send_cmd(0x06);
+	 lcd_send_cmd(0x01);
+	 HAL_Delay(2);
+}
+void lcd_write_string(char *str) {
+	 while (*str) {
+		 lcd_send_data(*str++);
+	 }
+}
+void lcd_set_cursor(uint8_t row, uint8_t column) {
+	 uint8_t address;
+	 switch (row) {
+		 case 0:
+			 address = 0x00;
+			 break;
+		 case 1:
+			 address = 0x40;
+			 break;
+		 default:
+			 address = 0x00;
+	 }
+	 address += column;
+	 lcd_send_cmd(0x80 | address);
+}
+void lcd_clear(void) {
+	 lcd_send_cmd(0x01);
+	 HAL_Delay(2);
+}
+void lcd_backlight(uint8_t state) {
+	 if (state) {
+		 backlight_state = 1;
+	 } else {
+		 backlight_state = 0;
+	 }
+}
+
+int float_equals(float a, float b) {
+	// checks if two floats are nearly equal within epsilon tolerance
+    return fabs(a - b) <= 0.0001;
+}
+
+char* Vpp_to_string(uint32_t num, char *str) {
+    switch (num) {
+        case 0: str[0] = '0'; str[1] = '.'; str[2] = '0'; str[3] = 'V'; str[4] = '\0'; break;
+        case 1: str[0] = '0'; str[1] = '.'; str[2] = '1'; str[3] = 'V'; str[4] = '\0'; break;
+        case 2: str[0] = '0'; str[1] = '.'; str[2] = '2'; str[3] = 'V'; str[4] = '\0'; break;
+        case 3: str[0] = '0'; str[1] = '.'; str[2] = '3'; str[3] = 'V'; str[4] = '\0'; break;
+        case 4: str[0] = '0'; str[1] = '.'; str[2] = '4'; str[3] = 'V'; str[4] = '\0'; break;
+        case 5: str[0] = '0'; str[1] = '.'; str[2] = '5'; str[3] = 'V'; str[4] = '\0'; break;
+        case 6: str[0] = '0'; str[1] = '.'; str[2] = '6'; str[3] = 'V'; str[4] = '\0'; break;
+        case 7: str[0] = '0'; str[1] = '.'; str[2] = '7'; str[3] = 'V'; str[4] = '\0'; break;
+        case 8: str[0] = '0'; str[1] = '.'; str[2] = '8'; str[3] = 'V'; str[4] = '\0'; break;
+        case 9: str[0] = '0'; str[1] = '.'; str[2] = '9'; str[3] = 'V'; str[4] = '\0'; break;
+        case 10: str[0] = '1'; str[1] = '.'; str[2] = '0'; str[3] = 'V'; str[4] = '\0'; break;
+        case 11: str[0] = '1'; str[1] = '.'; str[2] = '1'; str[3] = 'V'; str[4] = '\0'; break;
+        case 12: str[0] = '1'; str[1] = '.'; str[2] = '2'; str[3] = 'V'; str[4] = '\0'; break;
+        case 13: str[0] = '1'; str[1] = '.'; str[2] = '3'; str[3] = 'V'; str[4] = '\0'; break;
+        case 14: str[0] = '1'; str[1] = '.'; str[2] = '4'; str[3] = 'V'; str[4] = '\0'; break;
+        case 15: str[0] = '1'; str[1] = '.'; str[2] = '5'; str[3] = 'V'; str[4] = '\0'; break;
+        case 16: str[0] = '1'; str[1] = '.'; str[2] = '6'; str[3] = 'V'; str[4] = '\0'; break;
+        case 17: str[0] = '1'; str[1] = '.'; str[2] = '7'; str[3] = 'V'; str[4] = '\0'; break;
+        case 18: str[0] = '1'; str[1] = '.'; str[2] = '8'; str[3] = 'V'; str[4] = '\0'; break;
+        case 19: str[0] = '1'; str[1] = '.'; str[2] = '9'; str[3] = 'V'; str[4] = '\0'; break;
+        case 20: str[0] = '2'; str[1] = '.'; str[2] = '0'; str[3] = 'V'; str[4] = '\0'; break;
+        case 21: str[0] = '2'; str[1] = '.'; str[2] = '1'; str[3] = 'V'; str[4] = '\0'; break;
+        case 22: str[0] = '2'; str[1] = '.'; str[2] = '2'; str[3] = 'V'; str[4] = '\0'; break;
+        case 23: str[0] = '2'; str[1] = '.'; str[2] = '3'; str[3] = 'V'; str[4] = '\0'; break;
+        case 24: str[0] = '2'; str[1] = '.'; str[2] = '4'; str[3] = 'V'; str[4] = '\0'; break;
+        case 25: str[0] = '2'; str[1] = '.'; str[2] = '5'; str[3] = 'V'; str[4] = '\0'; break;
+        case 26: str[0] = '2'; str[1] = '.'; str[2] = '6'; str[3] = 'V'; str[4] = '\0'; break;
+        case 27: str[0] = '2'; str[1] = '.'; str[2] = '7'; str[3] = 'V'; str[4] = '\0'; break;
+        case 28: str[0] = '2'; str[1] = '.'; str[2] = '8'; str[3] = 'V'; str[4] = '\0'; break;
+        case 29: str[0] = '2'; str[1] = '.'; str[2] = '9'; str[3] = 'V'; str[4] = '\0'; break;
+        case 30: str[0] = '3'; str[1] = '.'; str[2] = '0'; str[3] = 'V'; str[4] = '\0'; break;
+        case 31: str[0] = '3'; str[1] = '.'; str[2] = '1'; str[3] = 'V'; str[4] = '\0'; break;
+        case 32: str[0] = '3'; str[1] = '.'; str[2] = '2'; str[3] = 'V'; str[4] = '\0'; break;
+        case 33: str[0] = '3'; str[1] = '.'; str[2] = '3'; str[3] = 'V'; str[4] = '\0'; break;
+        default: str[0] = '-'; str[1] = '-'; str[2] = '-'; str[3] = '-'; str[4] = '\0'; break;
+    }
+    return str;
+}
+
+char* freq_to_string(uint32_t num, char *str) {
+    switch (num) {
+        case 1: 	str[0] = '1'; str[1] = 'H'; str[2] = 'z'; str[3] = ' '; str[4] = ' '; str[5] = '\0'; break;
+        case 10: 	str[0] = '1'; str[1] = '0'; str[2] = 'H'; str[3] = 'z'; str[4] = ' '; str[5] = '\0'; break;
+        case 100: 	str[0] = '1'; str[1] = '0'; str[2] = '0'; str[3] = 'H'; str[4] = 'z'; str[5] = '\0'; break;
+        case 1000: 	str[0] = '1'; str[1] = 'k'; str[2] = 'H'; str[3] = 'z'; str[4] = ' '; str[5] = '\0'; break;
+        case 10000: str[0] = '1'; str[1] = '0'; str[2] = 'k'; str[3] = 'H'; str[4] = 'z'; str[5] = '\0'; break;
+        case 100000:str[0] = '1'; str[1] = '0'; str[2] = '0'; str[3] = 'k'; str[4] = ' '; str[5] = '\0'; break;
+        default: 	str[0] = '-'; str[1] = '-'; str[2] = '-'; str[3] = '-'; str[4] = '-'; str[5] = '\0'; break;
+    }
+    return str;
+}
+
+
+/* USER CODE END 0 */
+
+/**
+  * @brief  The application entry point.
+  * @retval int
+  */
+int main(void)
+{
+
+  /* USER CODE BEGIN 1 */
+
+  /* USER CODE END 1 */
+
+  /* MCU Configuration--------------------------------------------------------*/
+
+  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+  HAL_Init();
+
+  /* USER CODE BEGIN Init */
+
+  /* USER CODE END Init */
+
+  /* Configure the system clock */
+  SystemClock_Config();
+
+  /* Configure the peripherals common clocks */
+  PeriphCommonClock_Config();
+
+  /* USER CODE BEGIN SysInit */
+
+  /* USER CODE END SysInit */
+
+  /* Initialize all configured peripherals */
+  MX_GPIO_Init();
+  MX_DMA_Init();
+  MX_ADC1_Init();
+  MX_ADC2_Init();
+  MX_SPI2_Init();
+  MX_I2C1_Init();
+  MX_DAC1_Init();
+  MX_TIM2_Init();
+  MX_USART2_UART_Init();
+  /* USER CODE BEGIN 2 */
+//  HAL_TIM_Base_Start_IT(&htim16); // Start Timer16
+//  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1); // start PWM on Timer3’s Channel 1
+//  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2); // start PWM on Timer3’s Channel 2
+
+  // LCD
+  // I2C pull-up resistors
+  GPIOB->PUPDR |= 0b01 << (8*2);
+  GPIOB->PUPDR |= 0b01 << (9*2);
+  // Initialize the LCD
+  lcd_init();
+  lcd_backlight(1); // Turn on backlight
+  // TODO
+  // Write a string to the LCD
+  lcd_write_string("Peak-Peak: "); // ends column 11 (4 columns left)
+//  Vpp_float_to_string(Vpp, Vpp_str);
+//  lcd_write_string(Vpp_str);
+
+  lcd_set_cursor(1, 0);
+  lcd_write_string("Frequency: "); // ends column 11 (4 columns left)
+//  freq_float_to_string(freq, freq_str);
+//  lcd_write_string(freq_str);
+
+
+  // TODO
+  // display sin wave?
+  GLCD_init(); // initialize the screen
+  GLCD_clear(); // clear the screen
+  GLCD_putchar(1); // 'A'
+  GLCD_putchar(2); // 'B'
+  GLCD_putchar(3); // 'C'
+
+
+  // In your initialization code, after initializing DAC
+//  HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_1, DAC_ALIGN_12B_R, 2048); // Mid-range value
+//  HAL_DAC_Start(&hdac1, DAC_CHANNEL_1);
+
+//  HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_1, digital_sine_wave, SAMPLES, DAC_ALIGN_12B_R); // start DAC with DMA
+//  HAL_TIM_Base_Start(&htim2); // Start the timer to trigger DAC updates
+
+//  generate_sine_wave(1.0);
+//  HAL_TIM_Base_Start_IT(&htim2);
+//  HAL_DAC_Start(&hdac1, DAC_CHANNEL_1);
+//  HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_1, digital_sine_wave, SAMPLES, DAC_ALIGN_12B_R);
+
+//  uint32_t threeVoltValue = 3723; // ~3.0V out of 3.3V
+//  HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_2, DAC_ALIGN_12B_R, threeVoltValue);
+//  HAL_DAC_Start(&hdac1, DAC_CHANNEL_2);
+
+//  HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_1, (uint32_t*)digital_sine_wave, 128, DAC_ALIGN_12B_R);
+
+  HAL_TIM_Base_Start(&htim2);
+  update_sine_wave(20, freq);
+  /* USER CODE END 2 */
+
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
+  while (1)
+  {
+		lcd_set_cursor(0, 11);
+		Vpp_to_string(Vpp, Vpp_str);
+		lcd_write_string(Vpp_str);
+
+		lcd_set_cursor(1, 11);
+	    freq_to_string(freq, freq_str);
+	    lcd_write_string(freq_str);
+
+
+
+		HAL_ADC_Start(&hadc1);
+		HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
+		uint16_t channel_1 = HAL_ADC_GetValue(&hadc1);
+
+		HAL_ADC_Start(&hadc2);
+		HAL_ADC_PollForConversion(&hadc2, HAL_MAX_DELAY);
+		uint16_t channel_2 = HAL_ADC_GetValue(&hadc2);
+
+		char buffer[16];
+		char *ptr = buffer;
+
+		// TODO
+		// Convert channel_1
+		char str1[6]; // Max 5 digits + null
+		uint16_to_str(channel_1, str1);
+		char *s1 = str1;  // pointer to traverse the array
+		while (*s1) *ptr++ = *s1++;
+
+		*ptr++ = ',';
+
+		// Convert channel_2
+		char str2[6];
+		uint16_to_str(channel_2, str2);
+		char *s2 = str2;  // pointer to traverse the second string
+		while (*s2) *ptr++ = *s2++;
+
+		*ptr++ = '\n';
+		*ptr = '\0';
+
+		HAL_UART_Transmit(&huart2, (uint8_t*)buffer, (uint16_t)(ptr - buffer), HAL_MAX_DELAY);
+
+
+    /* USER CODE END WHILE */
+
+    /* USER CODE BEGIN 3 */
+  }
+  /* USER CODE END 3 */
+}
+
+/**
+  * @brief System Clock Configuration
+  * @retval None
+  */
+void SystemClock_Config(void)
+{
+  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+
+  /** Configure the main internal regulator output voltage
+  */
+  if (HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Initializes the RCC Oscillators according to the specified parameters
+  * in the RCC_OscInitTypeDef structure.
+  */
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+  RCC_OscInitStruct.PLL.PLLM = 1;
+  RCC_OscInitStruct.PLL.PLLN = 10;
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV7;
+  RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
+  RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
+  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Initializes the CPU, AHB and APB buses clocks
+  */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
+
+/**
+  * @brief Peripherals Common Clock Configuration
+  * @retval None
+  */
+void PeriphCommonClock_Config(void)
+{
+  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
+
+  /** Initializes the peripherals clock
+  */
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_ADC;
+  PeriphClkInit.AdcClockSelection = RCC_ADCCLKSOURCE_PLLSAI1;
+  PeriphClkInit.PLLSAI1.PLLSAI1Source = RCC_PLLSOURCE_HSI;
+  PeriphClkInit.PLLSAI1.PLLSAI1M = 1;
+  PeriphClkInit.PLLSAI1.PLLSAI1N = 8;
+  PeriphClkInit.PLLSAI1.PLLSAI1P = RCC_PLLP_DIV7;
+  PeriphClkInit.PLLSAI1.PLLSAI1Q = RCC_PLLQ_DIV2;
+  PeriphClkInit.PLLSAI1.PLLSAI1R = RCC_PLLR_DIV2;
+  PeriphClkInit.PLLSAI1.PLLSAI1ClockOut = RCC_PLLSAI1_ADC1CLK;
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
+
+/**
+  * @brief ADC1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_ADC1_Init(void)
+{
+
+  /* USER CODE BEGIN ADC1_Init 0 */
+
+  /* USER CODE END ADC1_Init 0 */
+
+  ADC_MultiModeTypeDef multimode = {0};
+  ADC_ChannelConfTypeDef sConfig = {0};
+
+  /* USER CODE BEGIN ADC1_Init 1 */
+
+  /* USER CODE END ADC1_Init 1 */
+
+  /** Common config
+  */
+  hadc1.Instance = ADC1;
+  hadc1.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV1;
+  hadc1.Init.Resolution = ADC_RESOLUTION_12B;
+  hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+  hadc1.Init.ScanConvMode = ADC_SCAN_DISABLE;
+  hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  hadc1.Init.LowPowerAutoWait = DISABLE;
+  hadc1.Init.ContinuousConvMode = DISABLE;
+  hadc1.Init.NbrOfConversion = 1;
+  hadc1.Init.DiscontinuousConvMode = DISABLE;
+  hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc1.Init.DMAContinuousRequests = DISABLE;
+  hadc1.Init.Overrun = ADC_OVR_DATA_PRESERVED;
+  hadc1.Init.OversamplingMode = DISABLE;
+  if (HAL_ADC_Init(&hadc1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure the ADC multi-mode
+  */
+  multimode.Mode = ADC_MODE_INDEPENDENT;
+  if (HAL_ADCEx_MultiModeConfigChannel(&hadc1, &multimode) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Regular Channel
+  */
+  sConfig.Channel = ADC_CHANNEL_5;
+  sConfig.Rank = ADC_REGULAR_RANK_1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_2CYCLES_5;
+  sConfig.SingleDiff = ADC_SINGLE_ENDED;
+  sConfig.OffsetNumber = ADC_OFFSET_NONE;
+  sConfig.Offset = 0;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN ADC1_Init 2 */
+
+  /* USER CODE END ADC1_Init 2 */
+
+}
+
+/**
+  * @brief ADC2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_ADC2_Init(void)
+{
+
+  /* USER CODE BEGIN ADC2_Init 0 */
+
+  /* USER CODE END ADC2_Init 0 */
+
+  ADC_ChannelConfTypeDef sConfig = {0};
+
+  /* USER CODE BEGIN ADC2_Init 1 */
+
+  /* USER CODE END ADC2_Init 1 */
+
+  /** Common config
+  */
+  hadc2.Instance = ADC2;
+  hadc2.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV1;
+  hadc2.Init.Resolution = ADC_RESOLUTION_12B;
+  hadc2.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+  hadc2.Init.ScanConvMode = ADC_SCAN_DISABLE;
+  hadc2.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  hadc2.Init.LowPowerAutoWait = DISABLE;
+  hadc2.Init.ContinuousConvMode = DISABLE;
+  hadc2.Init.NbrOfConversion = 1;
+  hadc2.Init.DiscontinuousConvMode = DISABLE;
+  hadc2.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc2.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc2.Init.DMAContinuousRequests = DISABLE;
+  hadc2.Init.Overrun = ADC_OVR_DATA_PRESERVED;
+  hadc2.Init.OversamplingMode = DISABLE;
+  if (HAL_ADC_Init(&hadc2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Regular Channel
+  */
+  sConfig.Channel = ADC_CHANNEL_6;
+  sConfig.Rank = ADC_REGULAR_RANK_1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_2CYCLES_5;
+  sConfig.SingleDiff = ADC_SINGLE_ENDED;
+  sConfig.OffsetNumber = ADC_OFFSET_NONE;
+  sConfig.Offset = 0;
+  if (HAL_ADC_ConfigChannel(&hadc2, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN ADC2_Init 2 */
+
+  /* USER CODE END ADC2_Init 2 */
+
+}
+
+/**
+  * @brief DAC1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_DAC1_Init(void)
+{
+
+  /* USER CODE BEGIN DAC1_Init 0 */
+
+  /* USER CODE END DAC1_Init 0 */
+
+  DAC_ChannelConfTypeDef sConfig = {0};
+
+  /* USER CODE BEGIN DAC1_Init 1 */
+
+  /* USER CODE END DAC1_Init 1 */
+
+  /** DAC Initialization
+  */
+  hdac1.Instance = DAC1;
+  if (HAL_DAC_Init(&hdac1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** DAC channel OUT1 config
+  */
+  sConfig.DAC_SampleAndHold = DAC_SAMPLEANDHOLD_DISABLE;
+  sConfig.DAC_Trigger = DAC_TRIGGER_T2_TRGO;
+  sConfig.DAC_OutputBuffer = DAC_OUTPUTBUFFER_ENABLE;
+  sConfig.DAC_ConnectOnChipPeripheral = DAC_CHIPCONNECT_DISABLE;
+  sConfig.DAC_UserTrimming = DAC_TRIMMING_FACTORY;
+  if (HAL_DAC_ConfigChannel(&hdac1, &sConfig, DAC_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN DAC1_Init 2 */
+
+  /* USER CODE END DAC1_Init 2 */
+
+}
+
+/**
+  * @brief I2C1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_I2C1_Init(void)
+{
+
+  /* USER CODE BEGIN I2C1_Init 0 */
+
+  /* USER CODE END I2C1_Init 0 */
+
+  /* USER CODE BEGIN I2C1_Init 1 */
+
+  /* USER CODE END I2C1_Init 1 */
+  hi2c1.Instance = I2C1;
+  hi2c1.Init.Timing = 0x10D19CE4;
+  hi2c1.Init.OwnAddress1 = 0;
+  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c1.Init.OwnAddress2 = 0;
+  hi2c1.Init.OwnAddress2Masks = I2C_OA2_NOMASK;
+  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Analogue filter
+  */
+  if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Digital filter
+  */
+  if (HAL_I2CEx_ConfigDigitalFilter(&hi2c1, 0) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN I2C1_Init 2 */
+
+  /* USER CODE END I2C1_Init 2 */
+
+}
+
+/**
+  * @brief SPI2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_SPI2_Init(void)
+{
+
+  /* USER CODE BEGIN SPI2_Init 0 */
+
+  /* USER CODE END SPI2_Init 0 */
+
+  /* USER CODE BEGIN SPI2_Init 1 */
+
+  /* USER CODE END SPI2_Init 1 */
+  /* SPI2 parameter configuration*/
+  hspi2.Instance = SPI2;
+  hspi2.Init.Mode = SPI_MODE_MASTER;
+  hspi2.Init.Direction = SPI_DIRECTION_2LINES;
+  hspi2.Init.DataSize = SPI_DATASIZE_8BIT;
+  hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
+  hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
+  hspi2.Init.NSS = SPI_NSS_SOFT;
+  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
+  hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
+  hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
+  hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  hspi2.Init.CRCPolynomial = 7;
+  hspi2.Init.CRCLength = SPI_CRC_LENGTH_DATASIZE;
+  hspi2.Init.NSSPMode = SPI_NSS_PULSE_ENABLE;
+  if (HAL_SPI_Init(&hspi2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN SPI2_Init 2 */
+
+  /* USER CODE END SPI2_Init 2 */
+
+}
+
+/**
+  * @brief TIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM2_Init(void)
+{
+
+  /* USER CODE BEGIN TIM2_Init 0 */
+
+  /* USER CODE END TIM2_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  /* USER CODE BEGIN TIM2_Init 1 */
+
+  /* USER CODE END TIM2_Init 1 */
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 0;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 624;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_OC_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_TIMING;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_OC_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM2_Init 2 */
+
+  /* USER CODE END TIM2_Init 2 */
+  HAL_TIM_MspPostInit(&htim2);
+
+}
+
+/**
+  * @brief USART2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART2_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART2_Init 0 */
+
+  /* USER CODE END USART2_Init 0 */
+
+  /* USER CODE BEGIN USART2_Init 1 */
+
+  /* USER CODE END USART2_Init 1 */
+  huart2.Instance = USART2;
+  huart2.Init.BaudRate = 115200;
+  huart2.Init.WordLength = UART_WORDLENGTH_8B;
+  huart2.Init.StopBits = UART_STOPBITS_1;
+  huart2.Init.Parity = UART_PARITY_NONE;
+  huart2.Init.Mode = UART_MODE_TX;
+  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart2.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&huart2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART2_Init 2 */
+
+  /* USER CODE END USART2_Init 2 */
+
+}
+
+/**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA1_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA1_Channel3_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel3_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel3_IRQn);
+  /* DMA1_Channel7_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel7_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel7_IRQn);
+
+}
+
+/**
+  * @brief GPIO Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_GPIO_Init(void)
+{
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+/* USER CODE BEGIN MX_GPIO_Init_1 */
+/* USER CODE END MX_GPIO_Init_1 */
+
+  /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOC_CLK_ENABLE();
+  __HAL_RCC_GPIOH_CLK_ENABLE();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, DC_Pin|GPIO_PIN_2|CE_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : B1_Pin */
+  GPIO_InitStruct.Pin = B1_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : DC_Pin PB2 CE_Pin */
+  GPIO_InitStruct.Pin = DC_Pin|GPIO_PIN_2|CE_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : REVERSE_Pin FREQ_BIG_Pin */
+  GPIO_InitStruct.Pin = REVERSE_Pin|FREQ_BIG_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : FREQ_SMALL_Pin VPP_SMALL_Pin VPP_BIG_Pin */
+  GPIO_InitStruct.Pin = FREQ_SMALL_Pin|VPP_SMALL_Pin|VPP_BIG_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI3_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI3_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI4_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI4_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
+
+/* USER CODE BEGIN MX_GPIO_Init_2 */
+/* USER CODE END MX_GPIO_Init_2 */
+}
+
+/* USER CODE BEGIN 4 */
+// Callback: this ISR is triggered whenever a timer has rolled over
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+
+}
+
+
+char* uint16_to_str(uint16_t num, char *str) {
+    int i = 0;
+    if (num == 0) {
+        str[i++] = '0';
+    } else {
+        char temp[5];
+        int j = 0;
+        while (num > 0) {
+            temp[j++] = (num % 10) + '0';
+            num /= 10;
+        }
+        while (j > 0) {
+            str[i++] = temp[--j];
+        }
+    }
+    str[i] = '\0';
+    return str;
+}
+
+
+void generate_sine_wave(uint32_t new_Vpp)
+{
+	for (int i = 0; i < 128; i++) {
+		new_sine_wave[i] = (uint32_t)((sine33[i] * new_Vpp) / 33);
+	}
+}
+
+void set_trigger_frequency(uint32_t wave_frequency) {
+	uint32_t trigger_frequency = wave_frequency * SAMPLES;
+	uint32_t arr = (80000000 / trigger_frequency) - 1;
+
+    __HAL_TIM_SET_AUTORELOAD(&htim2, arr);
+    HAL_TIM_GenerateEvent(&htim2, TIM_EVENTSOURCE_UPDATE);
+    HAL_TIM_Base_Start(&htim2);  // Restart timer
+}
+
+void update_sine_wave(uint32_t new_Vpp, uint32_t new_freq)
+{
+    HAL_DAC_Stop_DMA(&hdac1, DAC_CHANNEL_1); // Stop DAC DMA
+    generate_sine_wave(new_Vpp);          // Update sine wave values
+    set_trigger_frequency(new_freq);          // Update frequency
+    HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_1, new_sine_wave, SAMPLES, DAC_ALIGN_12B_R); // Restart DAC DMA
+    HAL_TIM_Base_Start_IT(&htim2);
+}
+
+
+void SPI_write(unsigned char data){
+	// Chip Enable (low is asserted)
+	HAL_GPIO_WritePin(CE_PORT, CE_PIN, GPIO_PIN_RESET);
+	// Send data over SPI1
+	HAL_SPI_Transmit(&hspi2, (uint8_t*) &data, 1, HAL_MAX_DELAY);
+	// Chip Disable
+	HAL_GPIO_WritePin(CE_PORT, CE_PIN, GPIO_PIN_SET);
+}
+
+void GLCD_data_write(unsigned char data){
+	// Switch to "data" mode (D/C pin high)
+	HAL_GPIO_WritePin(DC_PORT, DC_PIN, GPIO_PIN_SET);
+	// Send data over SPI
+	SPI_write(data);
+	}
+
+void GLCD_command_write(unsigned char data){
+	// Switch to "command" mode (D/C pin low)
+	HAL_GPIO_WritePin(DC_PORT, DC_PIN, GPIO_PIN_RESET);
+	// Send data over SPI
+	SPI_write(data);
+}
+
+void GLCD_init(void){
+	// Keep CE high when not transmitting
+	HAL_GPIO_WritePin(CE_PORT, CE_PIN, GPIO_PIN_SET);
+	// Reset the screen (low pulse - down & up)
+	HAL_GPIO_WritePin(RESET_PORT, RESET_PIN, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(RESET_PORT, RESET_PIN, GPIO_PIN_SET);
+	// Configure the screen (according to the datasheet)
+	GLCD_command_write(0x21); // enter extended command mode
+	GLCD_command_write(0xB0); // set LCD Vop for contrast (this may be adjusted)
+	GLCD_command_write(0x04); // set temp coefficient
+	GLCD_command_write(0x15); // set LCD bias mode (this may be adjusted)
+	GLCD_command_write(0x20); // return to normal command mode
+	GLCD_command_write(0x0C); // set display mode normal
+}
+
+void GLCD_setCursor(unsigned char x, unsigned char y){
+	GLCD_command_write(0x80 | x); // column
+	GLCD_command_write(0x40 | y); // bank
+}
+
+void GLCD_clear(void){
+	int i;
+	for(i = 0; i < (GLCD_WIDTH * NUM_BANKS); i++){
+		GLCD_data_write(0x00); // write zeros
+	}
+	GLCD_setCursor(0,0); // return cursor to top left
+}
+
+void GLCD_putchar(int font_table_row){
+	 int i;
+	 for (i=0; i<6; i++){
+		 GLCD_data_write(font_table[font_table_row][i]);
+	 }
+}
+
+//void draw_wave(float new_Vpp) {
+//    GLCD_clear(); // Clear display
+////    uint8_t bank_data[NUM_BANKS] = {0}; // Stores bank data for each column
+//    int factor;
+////    if (amplitude <= 1) factor = 4096;
+////    if (amplitude > 1 && amplitude <= 4) factor = 4096 * 4;
+////    if (amplitude > 4 && amplitude <= 8) factor = 4096 * 8;
+//    int logg = (int)log2(new_Vpp);
+//    if (logg < 0) {
+//            factor = 4096 * (1 << (-logg));  // Shift left for values below 1
+//        } else {
+//            factor = 4096 * (1 << logg);  // Shift right for values above 1
+//        }
+////    factor = 4096 * (1 << (int)log2(amplitude));
+//    for (int i = 0; i < GLCD_WIDTH; i++) { 						// for each column
+//    	int y = (digital_sine_wave[i] * (GLCD_HEIGHT - 1)) / 4096;		// scale wave values to fit on the screen
+//
+//    	if (y >= 0 && y <= GLCD_HEIGHT) {
+//    		int bank = y / 8;  										// Find which bank (each bank is 8 pixels tall)
+//			int bit_position = y % 8; 								// Find bit within the bank
+//
+//	//        bank_data[bank] |= (1 << bit_position); // Set only this bit
+//			GLCD_setCursor(i, bank); 				// Move to correct column and bank
+//	//        GLCD_data_write(bank_data[bank]); 		// Set the bank
+//			GLCD_data_write(1<<bit_position);
+//    	}
+//    }
+//}
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+    uint32_t current_time = HAL_GetTick();
+
+    if (GPIO_Pin == VPP_SMALL_Pin) {
+        if (current_time - last_Vpp_small_press > debounce_delay) {
+            last_Vpp_small_press = current_time;
+            if (REVERSE_Pin == 0){
+            	if (Vpp > 0) Vpp -= 1;
+            	else Vpp = 33;
+            }
+            if (Vpp < 33) Vpp += 1;
+            else Vpp = 0;
+        }
+    }
+
+    else if (GPIO_Pin == VPP_BIG_Pin) {
+        if (current_time - last_Vpp_big_press > debounce_delay) {
+            last_Vpp_big_press = current_time;
+            if (REVERSE_Pin == 0){
+            	if (Vpp >= 10) Vpp -= 10;
+            	else Vpp = 33;
+            }
+            if (Vpp <= 23) Vpp += 10;
+            else Vpp = 0;
+        }
+    }
+
+    else if (GPIO_Pin == FREQ_SMALL_Pin) {
+        if (current_time - last_freq_small_press > debounce_delay) {
+            last_freq_small_press = current_time;
+            if (REVERSE_Pin == 0){
+            	if 		(freq <= 1) 	freq = 100000;
+            	else if (freq <= 10)	freq -= 1;
+            	else if (freq <= 100)	freq -= 10;
+            	else if (freq <= 1000)	freq -= 100;
+            	else if (freq <= 10000)	freq -= 1000;
+            	else if (freq <= 100000)freq -= 10000;
+            }
+        	if 		(freq >= 900000)	freq = 1;
+        	else if (freq >= 10000)		freq += 10000;
+        	else if (freq >= 1000)		freq += 1000;
+        	else if (freq >= 100)		freq += 100;
+        	else if (freq >= 10)		freq += 10;
+        	else if (freq >= 1) 		freq += 1;
+        }
+    }
+
+    else if (GPIO_Pin == FREQ_BIG_Pin) {
+        if (current_time - last_freq_big_press > debounce_delay) {
+            last_freq_small_press = current_time;
+            if (REVERSE_Pin == 0){
+            	if (freq > 1) freq /= 10;
+            	else freq = 100000;
+            }
+            if (freq < 100000) freq *= 10;
+			else freq = 1;
+        }
+    }
+
+    update_sine_wave(Vpp, freq);
+}
+
+
+//uint8_t keypad_decode(void) {
+//	uint8_t key;
+//	unsigned char data = 0b0000;
+//
+//	// read the data pins and combine into the 4-bit value: D3_D2_D1_D0
+//	unsigned char D3 = HAL_GPIO_ReadPin(DATA3_GPIO_Port, DATA3_Pin);
+//	unsigned char D2 = HAL_GPIO_ReadPin(DATA2_GPIO_Port, DATA2_Pin);
+//	unsigned char D1 = HAL_GPIO_ReadPin(DATA1_GPIO_Port, DATA1_Pin);
+//	unsigned char D0 = HAL_GPIO_ReadPin(DATA0_GPIO_Port, DATA0_Pin);
+//	data = ((D3 << 3) | (D2 << 2) | (D1 << 1) | D0);
+//
+//	// The key encoder gives the following "data" values:
+//	// 0 1 2 3
+//	// 4 5 6 7
+//	// 8 9 A B
+//	// C D E F
+//
+//	// The following switch statement re-maps it to these "key" names in ascii:
+//	// 1 2 3 A
+//	// 4 5 6 B
+//	// 7 8 9 C
+//	// * 0 # D
+//
+//   // Finish this switch statement to remap the "data" to the correct "key"
+//	switch (data) {
+//      case 0x0:
+//         key = 0x31; // 1
+//         break;
+//      case 0x1:
+//         key = 0x32; // 2
+//         break;
+//      case 0x2:
+//         key = 0x33; // 3
+//         break;
+//      case 0x3:
+//         key = 0x41; // A
+//         break;
+//      case 0x4:
+//         key = 0x34; // 4
+//         break;
+//      case 0x5:
+//         key = 0x35; // 5
+//         break;
+//      case 0x6:
+//         key = 0x36; // 6
+//         break;
+//      case 0x7:
+//         key = 0x42; // B
+//         break;
+//      case 0x8:
+//         key = 0x37; // 7
+//         break;
+//      case 0x9:
+//         key = 0x38; // 8
+//         break;
+//      case 0xA:
+//         key = 0x39; // 9
+//         break;
+//      case 0xB:
+//         key = 0x43; // C
+//         break;
+//      case 0xC:
+//         key = 0x2A; // *
+//         break;
+//      case 0xD:
+//         key = 0x30; // 0
+//         break;
+//      case 0xE:
+//         key = 0x23; // #
+//         break;
+//      case 0xF:
+//         key = 0x44; // D
+//         break;
+//	}
+//	return key;
+//}
+
+/* USER CODE END 4 */
+
+/**
+  * @brief  This function is executed in case of error occurrence.
+  * @retval None
+  */
+void Error_Handler(void)
+{
+  /* USER CODE BEGIN Error_Handler_Debug */
+  /* User can add his own implementation to report the HAL error return state */
+  __disable_irq();
+  while (1)
+  {
+  }
+  /* USER CODE END Error_Handler_Debug */
+}
+
+#ifdef  USE_FULL_ASSERT
+/**
+  * @brief  Reports the name of the source file and the source line number
+  *         where the assert_param error has occurred.
+  * @param  file: pointer to the source file name
+  * @param  line: assert_param error line source number
+  * @retval None
+  */
+void assert_failed(uint8_t *file, uint32_t line)
+{
+  /* USER CODE BEGIN 6 */
+  /* User can add his own implementation to report the file name and line number,
+     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+  /* USER CODE END 6 */
+}
+#endif /* USE_FULL_ASSERT */

@@ -1372,11 +1372,11 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
  80009ee:	f04f 4090 	mov.w	r0, #1207959552	@ 0x48000000
  80009f2:	f000 fd5d 	bl	80014b0 <HAL_GPIO_WritePin>
 
-		 uint8_t key = keypad_decode();  // determine which key was pressed
+		 uint8_t key = keypad_decode();  // determine which key was pressed (key is in ascii)
  80009f6:	f000 f81b 	bl	8000a30 <keypad_decode>
  80009fa:	4603      	mov	r3, r0
  80009fc:	73fb      	strb	r3, [r7, #15]
-		 lcd_send_data(key); // Send data to the LCD
+		 lcd_send_data(key); // Send ascii key data to the LCD
  80009fe:	7bfb      	ldrb	r3, [r7, #15]
  8000a00:	4618      	mov	r0, r3
  8000a02:	f7ff fc46 	bl	8000292 <lcd_send_data>
